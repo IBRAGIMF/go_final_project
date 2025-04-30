@@ -11,24 +11,29 @@ import (
 func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var task db.Task
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
 	// проверим, что задан заголовок
 	if task.Title == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": "Не указан заголовок задачи"})
 		return
 	}
 	if err := checkDate(&task); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
 	// сохраняем задачу в БД
 	id, err := db.AddTask(&task)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	writeJSON(w, map[string]string{"id": fmt.Sprintf("%d", id)})
 }
 

@@ -29,7 +29,7 @@ func AddTask(task *Task) (int64, error) {
 }
 
 func Tasks(limit int) ([]*Task, error) {
-	res, err := DB.Query("SELECT id, date, title, comment, repeat FROM scheduler LIMIT ?", limit)
+	res, err := DB.Query("SELECT id, date, title, comment, repeat FROM scheduler LIMIT ? ORDER BY id", limit)
 	if err != nil {
 		return nil, err
 	}
