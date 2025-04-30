@@ -30,6 +30,10 @@ func updTaskHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
+	if task.Title == "" {
+		writeJSON(w, map[string]string{"error": "Не указан заголовок задачи"})
+		return
+	}
 
 	if CheckNextDate(time.Now().Format("20060102"), task.Date, task.Repeat) != MsgOk {
 		writeJSON(w, map[string]string{"error": MsgErr})
@@ -71,7 +75,7 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if task.Repeat == "" {
-		// Одноразовая задача — удаляем
+		// удаляем одноразовую задачу
 		err = db.DeleteTask(id)
 		if err != nil {
 			writeJSON(w, map[string]string{"error": err.Error()})
@@ -81,7 +85,6 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Периодическая — вычисляем следующую дату
 	num, err := NextDate(time.Now(), task.Date, task.Repeat)
 	if err != nil {
 		writeJSON(w, map[string]string{"error": "Ошибка расчёта следующей даты"})

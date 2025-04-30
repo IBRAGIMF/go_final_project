@@ -18,30 +18,45 @@ const (
 
 func NextDate(now time.Time, date string, repeat string) (string, error) {
 	t, _ := time.Parse(DateFormat, date)
+	rep := strings.ReplaceAll(repeat, " ", "")
 
-	if strings.ReplaceAll(repeat, " ", "")[0:1] == "y" {
-		for t.AddDate(1, 0, 0).Before(now) {
-			t = t.AddDate(1, 0, 0)
+	if len(rep) > 0 && rep[0] == 'y' {
+		origMonth := t.Month()
+		origDay := t.Day()
+
+		for {
+			year := t.Year() + 1
+			month := origMonth
+			day := origDay
+
+			// обработка для невисокосному году
+			if origMonth == time.February && origDay == 29 {
+				if year%4 != 0 || (year%100 == 0 && year%400 != 0) {
+					month = time.March
+					day = 1
+				}
+			}
+
+			candidate := time.Date(year, month, day, t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
+			if candidate.Before(now) {
+				t = candidate
+				continue
+			}
+			return candidate.Format(DateFormat), nil
 		}
-		return t.AddDate(1, 0, 0).Format(DateFormat), nil
-
 	} else {
-		num, err := strconv.Atoi(strings.ReplaceAll(repeat, " ", "")[1:])
+		num, err := strconv.Atoi(rep[1:])
 		if err != nil {
 			return MsgErr, err
 		}
-		if num == 1 {
-			return now.Format(DateFormat), nil
-		}
-		dateNew := t.AddDate(0, 0, num)
-		for dateNew.Before(now) {
-			dateNew = dateNew.AddDate(0, 0, num)
-		}
 
-		return dateNew.Format(DateFormat), nil
+		next := t.AddDate(0, 0, num)
+		for next.Before(now) {
+			next = next.AddDate(0, 0, num)
+		}
+		return next.Format(DateFormat), nil
 	}
 }
-
 func NextDayHandler(w http.ResponseWriter, r *http.Request) {
 	nowVal := r.FormValue("now")
 	dateVal := r.FormValue("date")

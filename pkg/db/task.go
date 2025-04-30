@@ -66,12 +66,12 @@ func UpdateTask(task *Task) error {
 	if len(id) == 0 {
 		return fmt.Errorf(`ID пустой`)
 	}
-	res, err := DB.Exec("UPDATE scheduler SET date = :date , title = :title, comment = :comment, repeat = :repeat where id = :id",
+	res, err := DB.Exec("UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
 		sql.Named("id", id),
 		sql.Named("date", task.Date),
 		sql.Named("title", task.Title),
 		sql.Named("comment", task.Comment),
-		sql.Named("repaet", task.Repeat))
+		sql.Named("repeat", task.Repeat))
 	if err != nil {
 		return err
 	}
@@ -86,8 +86,19 @@ func UpdateTask(task *Task) error {
 }
 
 func DeleteTask(id string) error {
-	_, err := DB.Exec("DELETE FROM scheduler WHERE id = ?", id)
-	return err
+	res, err := DB.Exec("DELETE FROM scheduler WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	// Проверка что хоть что то уадлено
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return fmt.Errorf("НЕ корректный id")
+	}
+	return nil
 }
 
 func UpdateDate(next string, id string) error {
